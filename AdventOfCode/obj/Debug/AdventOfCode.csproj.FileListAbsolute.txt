@@ -1,0 +1,10 @@
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\bin\Debug\AdventOfCode.exe.config
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\bin\Debug\AdventOfCode.exe
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\bin\Debug\AdventOfCode.pdb
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.csprojAssemblyReference.cache
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.Form1.resources
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.Properties.Resources.resources
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.csproj.GenerateResource.cache
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.csproj.CoreCompileInputs.cache
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.exe
+C:\Users\lmmbl\source\repos\AdventOfCode\AdventOfCode\obj\Debug\AdventOfCode.pdb
