@@ -80,6 +80,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="bitmasks.txt" />
     <Content Include="bootcode.txt" />
     <Content Include="customs.txt" />
     <Content Include="encoding.txt" />
@@ -90,6 +91,7 @@
     <Content Include="passports.txt" />
     <Content Include="passwords.txt" />
     <Content Include="seats.txt" />
+    <Content Include="tickets.txt" />
     <Content Include="toboggan.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

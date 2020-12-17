@@ -22,7 +22,7 @@ namespace AdventOfCode
             this.Show();
             Application.DoEvents();
 
-            this.textBox1.Text = Joltage().ToString();
+            this.textBox1.Text = Tickets().ToString();
         }
 
         string[] GetInput(int dy)
@@ -712,6 +712,371 @@ namespace AdventOfCode
                 else if (mv == "N") waypoint.Y -= mvln;
             }
             return Math.Abs(ship.X) + Math.Abs(ship.Y);
+        }
+
+        // Day 13
+        int Buses()
+        {
+            int ans = 0;
+            string sched = "19,x,x,x,x,x,x,x,x,41,x,x,x,37,x,x,x,x,x,821,x,x,x,x,x,x,x,x,x,x,x,x,13,x,x,x,17,x,x,x,x,x,x,x,x,x,x,x,29,x,463,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,23";
+            int tgt = 1001612;
+
+            string[] bus = sched.Split(',');
+            int ln = bus.Length;
+            bool[] busb = new bool[ln];
+
+            int bestbus = 0;
+            int bestmin = 1000;
+            for (int i = 0; i < ln; i++)
+            {
+                if (bus[i] != "x")
+                {
+                    busb[i] = true;
+                    int b = int.Parse(bus[i]);
+                    int wk = tgt / b;
+                    int nextbus = (wk + 1) * b;
+                    int mins = nextbus - tgt;
+                    if (mins < bestmin)
+                    {
+                        bestbus = b;
+                        bestmin = mins;
+                    }
+                }
+            }
+            ans = bestbus * bestmin;
+            return ans;
+        }
+        long Buses2()
+        {
+            string sched = "19,x,x,x,x,x,x,x,x,41,x,x,x,37,x,x,x,x,x,821,x,x,x,x,x,x,x,x,x,x,x,x,13,x,x,x,17,x,x,x,x,x,x,x,x,x,x,x,29,x,463,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,23";
+
+            long inc = 821 * 19 * 13 * 17 * 29;
+            for (long i = inc; ; i += inc)
+            {
+                if (i % 41 == 10 && i % 37 == 6 && i % 463 == 432 && i % 23 == 15)
+                {
+                    return (i - 19);
+                }
+            }
+            return -1;
+        }
+
+        // Day 14
+        long Bitmasks()
+        {
+            long ans = 0;
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\bitmasks.txt");
+            Dictionary<int, string> addresses = new Dictionary<int, string>();
+            string wkmask = "";
+
+            foreach (string s in lines)
+            {
+                if (s.Substring(0, 6) == "mask =") wkmask = s.Substring(7);
+
+                else if (s.Substring(0, 4) == "mem[")
+                {
+                    int p = s.IndexOf(']');
+                    int adr = int.Parse(s.Substring(4, p - 4));
+                    long val = long.Parse(s.Substring(p + 4));
+                    if (!addresses.ContainsKey(adr)) addresses.Add(adr, "");
+                    addresses[adr] = ApplyMask(val, wkmask);
+                }
+            }
+
+            foreach (string s in addresses.Values) ans += FromBase2(s);
+
+            return ans;
+        }
+        long Bitmasks2()
+        {
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\bitmasks.txt");
+            //string[] lines = { "mask = 000000000000000000000000000000X1001X", "mem[42] = 100", "mask = 00000000000000000000000000000000X0XX", "mem[26] = 1" };
+            Dictionary<long, long> addresses = new Dictionary<long, long>();
+            string wkmask = "";
+
+            foreach (string s in lines)
+            {
+                if (s.Substring(0, 6) == "mask =") wkmask = s.Substring(7);
+
+                else if (s.Substring(0, 4) == "mem[")
+                {
+                    int p = s.IndexOf(']');
+                    long adr = int.Parse(s.Substring(4, p - 4));
+                    long val = long.Parse(s.Substring(p + 4));
+
+                    string wk = ToBase2(adr, wkmask.Length);
+                    List<long> ls = new List<long>();
+                    GetAddrs(ls, wk, wkmask);
+
+                    foreach (long n in ls)
+                    {
+                        if (addresses.ContainsKey(n)) addresses[n] = val;
+                        else addresses.Add(n, val);
+                    }
+                }
+            }
+
+            return addresses.Values.Sum();
+        }
+        void GetAddrs(List<long> ls, string s, string mask)
+        {
+            int p = mask.IndexOf('X');
+            if (p == -1)
+            {
+                long v = FromBase2(ApplyMask2(s, mask));
+                if (!ls.Contains(v)) ls.Add(v);
+            }
+            else if (p == 0)
+            {
+                GetAddrs(ls, s, "*" + mask.Substring(1));
+                GetAddrs(ls, s, "1" + mask.Substring(1));
+            }
+            else
+            {
+                int ln = mask.Length;
+                string prefx = mask.Substring(0, p);
+                string suffx = "";
+                if (p + 1 < ln) suffx = mask.Substring(p + 1);
+                GetAddrs(ls, s, prefx + "*" + suffx);
+                GetAddrs(ls, s, prefx + "1" + suffx);
+            }
+        }
+        string ApplyMask(long n, string mask)
+        {
+            string ans = "";
+            int ln = mask.Length;
+            bool[] ar = new bool[ln];
+            long wk = n;
+            for (int i = 0; i < ln; i++)
+            {
+                long p2 = (long)Math.Pow(2, ln - i - 1);
+                if (wk >= p2)
+                {
+                    ar[i] = true;
+                    wk -= p2;
+                    if (wk == 0) break;
+                }
+            }
+
+            for (int i = 0; i < ln; i++)
+            {
+                if (mask.Substring(i, 1) == "X") ans += (ar[i] ? "1" : "0");
+                else ans += mask.Substring(i, 1);
+            }
+
+            return ans;
+        }
+        string ApplyMask2(string s, string mask)
+        {
+            string ans = "";
+            int ln = mask.Length;
+
+            for (int i = 0; i < ln; i++)
+            {
+                if (mask.Substring(i, 1) == "1") ans += "1";
+                else if (mask.Substring(i, 1) == "*") ans += "0";
+                else ans += s.Substring(i, 1);
+            }
+
+            return ans;
+        }
+        string ToBase2(long n, int ln)
+        {
+            string ans = "";
+            bool[] ar = new bool[ln];
+            long wk = n;
+            for (int i = 0; i < ln; i++)
+            {
+                long p2 = (long)Math.Pow(2, ln - i - 1);
+                if (wk >= p2)
+                {
+                    ar[i] = true;
+                    wk -= p2;
+                    if (wk == 0) break;
+                }
+            }
+
+            for (int i = 0; i < ln; i++) ans += (ar[i] ? "1" : "0");
+
+            return ans;
+        }
+        long FromBase2(string s)
+        {
+            int ln = s.Length;
+            long ans = 0;
+
+            for (int i = 0; i < ln; i++)
+            {
+                if (s.Substring(i, 1) == "1")
+                {
+                    int p = ln - i - 1;
+                    ans += (long)Math.Pow(2, p);
+                }
+            }
+
+            return ans;
+        }
+
+        // Day 15
+        long Recitation()
+        {
+            //long upTo = 2020;
+            long upTo = 30000000;
+            Dictionary<long, long> mostRecent = new Dictionary<long, long>();
+            // 18,8,0,5,4,1,20
+            mostRecent.Add(18, 1);
+            mostRecent.Add(8, 2);
+            mostRecent.Add(0, 3);
+            mostRecent.Add(5, 4);
+            mostRecent.Add(4, 5);
+            mostRecent.Add(1, 6);
+            long ans = 20;
+            long c = 6;
+
+            while (true)
+            {
+                c++;
+
+                if (mostRecent.ContainsKey(ans))
+                {
+                    long wk = ans;
+                    long wkr = mostRecent[ans];
+                    mostRecent[ans] = c;
+                    if (c == upTo) break;
+
+                    ans = c - wkr;
+
+                    if (ans == wkr)
+                    {
+                        c++;
+                        mostRecent[ans] = c;
+                        if (c == upTo) break;
+
+                        ans = 1;
+                    }
+                }
+                else
+                {
+                    mostRecent.Add(ans, c);
+                    if (c == upTo) break;
+                    ans = 0;
+                }
+            }
+            return ans;
+        }
+
+        // Day 16
+        long Tickets()
+        {
+            long ans0 = 0; // answer to part 1
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\tickets.txt");
+            Dictionary<string, int> LL1 = new Dictionary<string, int>();
+            Dictionary<string, int> UL1 = new Dictionary<string, int>();
+            Dictionary<string, int> LL2 = new Dictionary<string, int>();
+            Dictionary<string, int> UL2 = new Dictionary<string, int>();
+            int[] myTkt = new int[2];
+            int aln = 0;
+            List<int[]> goodTkts = new List<int[]>();
+
+            int part = 0;
+            foreach (string s in lines)
+            {
+                if (part == 0)
+                {
+                    if (s == "") part = 1;
+                    else
+                    {
+                        int p = s.IndexOf(':');
+                        string k = s.Substring(0, p);
+                        string wk = s.Substring(p + 2);
+                        wk = wk.Replace(" or ", "-");
+                        string[] ar = wk.Split('-');
+                        LL1.Add(k, int.Parse(ar[0]));
+                        UL1.Add(k, int.Parse(ar[1]));
+                        LL2.Add(k, int.Parse(ar[2]));
+                        UL2.Add(k, int.Parse(ar[3]));
+                    }
+                }
+                else if (part == 1)
+                {
+                    if (s == "") part = 2;
+                    else
+                    {
+                        if (s != "your ticket:")
+                        {
+                            string[] numsA = s.Split(',');
+                            aln = numsA.Length;
+                            myTkt = new int[aln];
+                            for (int i = 0; i < aln; i++) myTkt[i] = int.Parse(numsA[i]);
+                        }
+                    }
+                }
+                else
+                {
+                    if (s != "nearby tickets:")
+                    {
+                        bool tickOk = true;
+                        string[] numsA = s.Split(',');
+                        int[] nums = new int[aln];
+                        for (int i = 0; i < aln; i++)
+                        {
+                            nums[i] = int.Parse(numsA[i]);
+                            bool ok = false;
+                            foreach (string k in LL1.Keys)
+                            {
+                                ok = ((nums[i] >= LL1[k] && nums[i] <= UL1[k]) || (nums[i] >= LL2[k] && nums[i] <= UL2[k]));
+                                if (ok) break;
+                            }
+                            if (!ok)
+                            {
+                                tickOk = false;
+                                ans0 += nums[i];
+                            }
+                        }
+                        if (tickOk) goodTkts.Add(nums);
+                    }
+                }
+            }
+            //MessageBox.Show(ans0.ToString());
+
+            long ans = 1;
+            List<int> used = new List<int>();
+            Dictionary<string, int> ind = new Dictionary<string, int>();
+            while (ind.Count < LL1.Count)
+            {
+                foreach (string k in LL1.Keys)
+                {
+                    List<int> couldBe = new List<int>();
+                    for (int i = 0; i < aln; i++)
+                    {
+                        if (!used.Contains(i))
+                        {
+                            if (TryColumn(goodTkts, i, LL1[k], UL1[k], LL2[k], UL2[k])) couldBe.Add(i);
+                        }
+                    }
+                    if (couldBe.Count == 1)
+                    {
+                        //MessageBox.Show(k + " : column " + couldBe[0].ToString());
+                        ind.Add(k, couldBe[0]);
+                        used.Add(couldBe[0]);
+                    }
+                }
+            }
+            foreach (string k in ind.Keys)
+            {
+                if (k.StartsWith("departure")) ans *= myTkt[ind[k]];
+            }
+            return ans;
+        }
+        bool TryColumn(List<int[]> tkts, int i, int lo1, int hi1, int lo2, int hi2)
+        {
+            bool pass = true;
+            foreach (int[] wk in tkts)
+            {
+                pass = ((wk[i] >= lo1 && wk[i] <= hi1) || (wk[i] >= lo2 && wk[i] <= hi2));
+                if (!pass) break;
+            }
+            return pass;
         }
     }
 }
