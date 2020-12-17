@@ -22,7 +22,7 @@ namespace AdventOfCode
             this.Show();
             Application.DoEvents();
 
-            this.textBox1.Text = Tickets().ToString();
+            this.textBox1.Text = Conway().ToString();
         }
 
         string[] GetInput(int dy)
@@ -1039,7 +1039,6 @@ namespace AdventOfCode
             }
             //MessageBox.Show(ans0.ToString());
 
-            long ans = 1;
             List<int> used = new List<int>();
             Dictionary<string, int> ind = new Dictionary<string, int>();
             while (ind.Count < LL1.Count)
@@ -1062,6 +1061,8 @@ namespace AdventOfCode
                     }
                 }
             }
+
+            long ans = 1;
             foreach (string k in ind.Keys)
             {
                 if (k.StartsWith("departure")) ans *= myTkt[ind[k]];
@@ -1077,6 +1078,99 @@ namespace AdventOfCode
                 if (!pass) break;
             }
             return pass;
+        }
+
+        // Day 17
+        long Conway()
+        {
+            int rounds = 6;
+            //string[] lines = { ".#.", "..#", "###" };
+            string[] lines = { "##...#.#", "#..##..#", "..#.####", ".#..#...", "########", "######.#", ".####..#", ".###.#.." };
+            int ln = lines.Length;
+            int xln = ln + (2 * rounds);
+            int yln = ln + (2 * rounds);
+            int zln = 1 + (2 * rounds);
+            int wln = 1 + (2 * rounds);
+            bool[,,,] pocket = new bool[xln, yln, zln, wln];
+            for (int y = 0; y < ln; y++)
+            {
+                for (int x = 0; x < ln; x++)
+                {
+                    pocket[rounds + x, rounds + y, rounds, rounds] = (lines[y].Substring(x, 1) == "#");
+                    //if (lines[y].Substring(x, 1) == "#") pocket[ln + x, ln + y, ln] = true;
+                }
+            }
+            for (int r = 0; r < rounds; r++)
+            {
+                bool[,,,] newPock = new bool[xln, yln, zln, wln];
+                for (int w = 0; w < wln; w++)
+                {
+                    for (int z = 0; z < zln; z++)
+                    {
+                        for (int y = 0; y < yln; y++)
+                        {
+                            for (int x = 0; x < xln; x++)
+                            {
+                                int neighbors = CountNeighbors(x, y, z, w, pocket, xln, yln, zln, wln);
+                                if (pocket[x, y, z, w])
+                                {
+                                    if (neighbors >= 2 & neighbors <= 3) newPock[x, y, z, w] = true;
+                                }
+                                else if (neighbors == 3) newPock[x, y, z, w] = true;
+
+                            }
+                        }
+                    }
+                }
+
+                pocket = newPock;
+            }
+            long ans = 0;
+            for (int w = 0; w < wln; w++)
+            {
+                for (int z = 0; z < zln; z++)
+                {
+                    for (int y = 0; y < yln; y++)
+                    {
+                        for (int x = 0; x < xln; x++)
+                        {
+                            if (pocket[x, y, z, w]) ans++;
+                        }
+                    }
+                }
+            }
+            return ans;
+        }
+        int CountNeighbors(int x, int y, int z, int w, bool[,,,] pocket, int xln, int yln, int zln, int wln)
+        {
+            int ans = 0;
+
+            for (int nw = w - 1; nw < w + 2; nw++)
+            {
+                if (nw >= 0 && nw < wln)
+                {
+                    for (int nz = z - 1; nz < z + 2; nz++)
+                    {
+                        if (nz >= 0 && nz < zln)
+                        {
+                            for (int ny = y - 1; ny < y + 2; ny++)
+                            {
+                                if (ny >= 0 && ny < yln)
+                                {
+                                    for (int nx = x - 1; nx < x + 2; nx++)
+                                    {
+                                        if ((nx >= 0 && nx < xln)
+                                            && (nx != x || ny != y || nz != z || nw != w)
+                                            && (pocket[nx, ny, nz, nw]))
+                                            ans++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return ans;
         }
     }
 }
