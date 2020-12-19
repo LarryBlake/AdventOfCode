@@ -80,6 +80,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="arithmetic.txt" />
     <Content Include="bitmasks.txt" />
     <Content Include="bootcode.txt" />
     <Content Include="customs.txt" />

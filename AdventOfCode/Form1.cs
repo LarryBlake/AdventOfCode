@@ -22,7 +22,7 @@ namespace AdventOfCode
             this.Show();
             Application.DoEvents();
 
-            this.textBox1.Text = Conway().ToString();
+            this.textBox1.Text = Homework().ToString();
         }
 
         string[] GetInput(int dy)
@@ -1169,6 +1169,68 @@ namespace AdventOfCode
                         }
                     }
                 }
+            }
+            return ans;
+        }
+
+        // Day 18
+        long Homework()
+        {
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\arithmetic.txt");
+            long ans = 0;
+            foreach (string s in lines) ans += EvalFormula(s);
+            return ans;
+        }
+        long EvalFormula(string s)
+        {
+            string wk = s.Replace(" ", "");
+
+            while (wk.Contains(")"))
+            {
+                int clsp = wk.IndexOf(")");
+                int opnp = clsp;
+                for (int i = clsp - 1; ; i--)
+                {
+                    if (wk.Substring(i, 1) == "(")
+                    {
+                        opnp = i;
+                        break;
+                    }
+                }
+
+                string bef = (opnp > 0 ? wk.Substring(0, opnp) : "");
+                string aft = (clsp + 1 < wk.Length ? wk.Substring(clsp + 1) : "");
+                wk = bef + EvalFormula(wk.Substring(opnp + 1, clsp - opnp - 1)) + aft;
+            }
+
+            if (!wk.Contains("+") && !wk.Contains("*")) return long.Parse(wk);
+
+            return PlusTimesPt2(wk);
+        }
+        long PlusTimes(string wk)
+        { 
+            string[] nums = wk.Split('*', '+');
+            long ans = long.Parse(nums[0]);
+            int p = 0;
+            for (int i = 0; i + 1 < nums.Length; i++)
+            {
+                p += nums[i].Length;
+                if (wk.Substring(p, 1) == "+") ans += long.Parse(nums[i + 1]);
+                if (wk.Substring(p, 1) == "*") ans *= long.Parse(nums[i + 1]);
+                p++;
+            }
+            return ans;
+        }
+        long PlusTimesPt2(string wk)
+        {
+            if (!wk.Contains("+")) return PlusTimes(wk);
+            if (!wk.Contains("*")) return PlusTimes(wk);
+
+            string[] nums = wk.Split('*');
+            long ans = EvalFormula(nums[0]);
+            for (int i = 1; i < nums.Length; i++)
+            {
+                ans *= PlusTimes(nums[i]);
             }
             return ans;
         }
