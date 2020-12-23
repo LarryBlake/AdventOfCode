@@ -87,12 +87,15 @@
     <Content Include="encoding.txt" />
     <Content Include="evade.txt" />
     <Content Include="ferry.txt" />
+    <Content Include="ingredients.txt" />
     <Content Include="joltage.txt" />
     <Content Include="luggage.txt" />
+    <Content Include="message.txt" />
     <Content Include="passports.txt" />
     <Content Include="passwords.txt" />
     <Content Include="seats.txt" />
     <Content Include="tickets.txt" />
+    <Content Include="tiles.txt" />
     <Content Include="toboggan.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

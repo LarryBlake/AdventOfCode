@@ -22,7 +22,7 @@ namespace AdventOfCode
             this.Show();
             Application.DoEvents();
 
-            this.textBox1.Text = Homework().ToString();
+            this.textBox1.Text = Cups2().ToString();
         }
 
         string[] GetInput(int dy)
@@ -1232,6 +1232,357 @@ namespace AdventOfCode
             {
                 ans *= PlusTimes(nums[i]);
             }
+            return ans;
+        }
+
+        // Day 19
+        long Message()
+        {
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\message.txt");
+            Dictionary<string, List<string[]>> rules = new Dictionary<string, List<string[]>>();
+            List<string> cands = new List<string>();
+            foreach (string s in lines)
+            {
+                if (s.Contains(":"))
+                {
+                    int p = s.IndexOf(":");
+                    string k = s.Substring(0, p);
+                    string v = s.Substring(p + 2);
+                    v = v.Replace(" | ", "|").Replace(" ", ",");
+                    string[] va = v.Split('|');
+                    List<string[]> ls = new List<string[]>();
+                    foreach (string w in va)
+                    {
+                        string[] sa = w.Split(',');
+                        ls.Add(sa);
+                    }
+                    rules.Add(k, ls);
+                }
+
+                else if (s == "") ;
+
+                else cands.Add(s);
+            }
+
+            long ans = 0;
+            foreach (string c in cands)
+            {
+                string soFar = "";
+                if (TryCand(c, rules, soFar, "0") == 2) ans++;
+            }
+            return ans;
+        }
+        int TryCand(string tgt, Dictionary<string, List<string[]>> rules, string soFar, string rKey)
+        {
+            int sfl = soFar.Length;
+            foreach (string[] path in rules[rKey])
+            {
+                string newSF = soFar;
+                int pl = path.Length;
+                foreach (string p in path)
+                {
+                    if (p.Substring(1, 1) == "a" || p.Substring(1, 1) == "b") newSF += p.Substring(1, 1);
+                    else
+                    {
+                        //newSF
+                    }
+                }
+            }
+            return 0;
+        }
+
+        // Day 21
+        string Allergens()
+        {
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\ingredients.txt");
+            int ln = lines.Length;
+            Dictionary<string, List<int>> allerg = new Dictionary<string, List<int>>();
+            Dictionary<int, List<string>> ingreds = new Dictionary<int, List<string>>();
+            for (int i = 0; i < ln; i++)
+            {
+                int lparen = lines[i].IndexOf('(');
+                List<string> ingwk = lines[i].Substring(0, lparen - 1).Split(' ').ToList();
+                ingreds.Add(i, ingwk);
+
+                List<string> allerwk = lines[i].Substring(lparen + 10).Replace(")", "").Replace(" ", "").Split(',').ToList();
+                foreach (string a in allerwk)
+                {
+                    if (!allerg.ContainsKey(a)) allerg.Add(a, new List<int>());
+                    allerg[a].Add(i);
+                }
+            }
+
+            Dictionary<string, List<string>> couldBe = new Dictionary<string, List<string>>();
+            foreach (string a in allerg.Keys)
+            {
+                couldBe.Add(a, new List<string>());
+                foreach (string s in ingreds[allerg[a][0]])
+                {
+                    bool ok = true;
+                    foreach (int i in allerg[a])
+                    {
+                        ok = (ingreds[i].Contains(s));
+                        if (!ok) break;
+                    }
+                    if (ok) couldBe[a].Add(s);
+                }
+            }
+
+            //  *** PART 1 ANSWER
+            //long ans = 0;
+            //foreach (int k in ingreds.Keys)
+            //{
+            //    foreach (string w in ingreds[k])
+            //    {
+            //        bool poss = false;
+            //        foreach (string a in couldBe.Keys)
+            //        {
+            //            poss = couldBe[a].Contains(w);
+            //            if (poss) break;
+            //        }
+            //        if (!poss) ans++;
+            //    }
+            //}
+            //return ans;
+
+            SortedDictionary<string, string> mustBe = new SortedDictionary<string, string>();
+            foreach (string k in couldBe.Keys) mustBe.Add(k, "");
+
+            while (couldBe.Keys.Count > 0)
+            {
+                foreach (string k in couldBe.Keys)
+                {
+                    if (couldBe[k].Count == 1) mustBe[k] = couldBe[k][0];
+                }
+
+                foreach (string k in mustBe.Keys)
+                {
+                    if (mustBe[k] != "" && couldBe.ContainsKey(k)) couldBe.Remove(k);
+
+                    foreach (string k2 in mustBe.Keys)
+                    {
+                        if (couldBe.ContainsKey(k2) && couldBe[k2].Contains(mustBe[k])) couldBe[k2].Remove(mustBe[k]);
+                    }
+                }
+            }
+
+            string ans = "";
+            foreach (string k in mustBe.Keys)
+            {
+                if (ans == "") ans = mustBe[k];
+                else ans += "," + mustBe[k];
+            }
+            return ans;
+        }
+
+        // Day 22
+        long War()
+        {
+            List<int> st1 = new List<int>() { 43, 21, 2, 20, 36, 31, 32, 37, 38, 26, 48, 47, 17, 16, 42, 12, 45, 19, 23, 14, 50, 44, 29, 34, 1 };
+            List<int> st2 = new List<int>() { 40, 24, 49, 10, 22, 35, 28, 46, 7, 41, 15, 5, 39, 33, 11, 8, 3, 18, 4, 13, 6, 25, 30, 27, 9 };
+            Queue<int> play1 = new Queue<int>();
+            Queue<int> play2 = new Queue<int>();
+
+            foreach (int w in st1) play1.Enqueue(w);
+            foreach (int w in st2) play2.Enqueue(w);
+
+            while (play1.Count > 0 && play2.Count > 0)
+            {
+                int m1 = play1.Dequeue();
+                int m2 = play2.Dequeue();
+                if (m1 > m2)
+                {
+                    play1.Enqueue(m1);
+                    play1.Enqueue(m2);
+                }
+                else
+                {
+                    play2.Enqueue(m2);
+                    play2.Enqueue(m1);
+                }
+            }
+
+            Queue<int> winner = (play1.Count == 0 ? play2 : play1);
+            int c = winner.Count;
+            long ans = 0;
+            while (c > 0)
+            {
+                ans += winner.Dequeue() * c;
+                c--;
+            }
+            return ans;
+        }
+        long War2()
+        {
+            //List<int> st1 = new List<int>() { 9, 2, 6, 3, 1 };
+            //List<int> st2 = new List<int>() { 5, 8, 4, 7, 10 };
+            List<int> st1 = new List<int>() { 43, 21, 2, 20, 36, 31, 32, 37, 38, 26, 48, 47, 17, 16, 42, 12, 45, 19, 23, 14, 50, 44, 29, 34, 1 };
+            List<int> st2 = new List<int>() { 40, 24, 49, 10, 22, 35, 28, 46, 7, 41, 15, 5, 39, 33, 11, 8, 3, 18, 4, 13, 6, 25, 30, 27, 9 };
+
+            Queue<int> play1 = new Queue<int>();
+            Queue<int> play2 = new Queue<int>();
+
+            foreach (int w in st1) play1.Enqueue(w);
+            foreach (int w in st2) play2.Enqueue(w);
+
+            int p = War2Recursive(play1, play2);
+            Queue<int> winner = (p == 1 ? play1 : play2);
+            int c = winner.Count;
+            long ans = 0;
+            while (c > 0)
+            {
+                ans += winner.Dequeue() * c;
+                c--;
+            }
+            return ans;
+        }
+        int War2Recursive(Queue<int> play1, Queue<int> play2)
+        {
+            int win = 0;
+            Dictionary<string, bool> prevState = new Dictionary<string, bool>();
+
+            while (play1.Count > 0 && play2.Count > 0)
+            {
+                string ws = WarString(play1, play2);
+                if (prevState.ContainsKey(ws)) return 1;
+                prevState.Add(ws, false);
+
+                int m1 = play1.Dequeue();
+                int m2 = play2.Dequeue();
+
+                if (play1.Count >= m1 && play2.Count >= m2)
+                {
+                    List<int> xxx = play1.ToList();
+                    Queue<int> newp1 = new Queue<int>();
+                    for (int i = 0; i < m1; i++) newp1.Enqueue(xxx[i]);
+
+                    xxx = play2.ToList();
+                    Queue<int> newp2 = new Queue<int>();
+                    for (int i = 0; i < m2; i++) newp2.Enqueue(xxx[i]);
+
+                    win = War2Recursive(newp1, newp2);
+                }
+                else win = (m1 > m2 ? 1 : 2);
+                    
+                if (win == 1)
+                {
+                    play1.Enqueue(m1);
+                    play1.Enqueue(m2);
+                }
+                else
+                {
+                    play2.Enqueue(m2);
+                    play2.Enqueue(m1);
+                }
+            }
+
+            return (play1.Count > play2.Count ? 1 : 2);
+        }
+        string WarString(Queue<int> play1, Queue<int> play2)
+        {
+            List<int> xxx = play1.ToList();
+            int ln = xxx.Count;
+            string s = xxx[0].ToString();
+            for (int i = 1; i < ln; i++) s += "," + xxx[i].ToString();
+
+            xxx = play2.ToList();
+            ln = xxx.Count;
+            s += "|" + xxx[0].ToString();
+            for (int i = 1; i < ln; i++) s += "," + xxx[i].ToString();
+
+            return s;
+        }
+
+        // Day 23
+        long Cups()
+        {
+            string st = "326519478";
+            int ln = st.Length;
+            // "Linked List".  Element 0 is unused.
+            int[] nextLink = new int[ln + 1];
+
+            for (int i = 0; i < ln; i++)
+            {
+                int w = int.Parse(st.Substring(i, 1));
+                nextLink[w] = int.Parse(i + 1 == ln ? st.Substring(0, 1) : st.Substring(i + 1, 1));
+            }
+            int currCup = int.Parse(st.Substring(0, 1));
+
+            int tms = 100;
+            for (int i = 0; i < tms; i++)
+            {
+                int[] take3 = new int[3];
+                take3[0] = nextLink[currCup];
+                take3[1] = nextLink[take3[0]];
+                take3[2] = nextLink[take3[1]];
+
+                int dest = currCup - 1;
+                if (dest < 1) dest = ln;
+
+                while (dest == take3[0] || dest == take3[1] || dest == take3[2])
+                {
+                    dest--;
+                    if (dest < 1) dest = ln;
+                }
+
+                nextLink[currCup] = nextLink[take3[2]];
+                nextLink[take3[2]] = nextLink[dest];
+                nextLink[dest] = take3[0];
+                currCup = nextLink[currCup];
+            }
+
+            long ans = 0;
+            long a = 1;
+            for (int i = 1; i < ln; i++)
+            {
+                a = nextLink[a];
+                ans = (10 * ans) + a;
+            }
+            return ans;
+        }
+        long Cups2()
+        {
+            string st = "326519478";
+            int ln = st.Length;
+            // "Linked List".  Element 0 is unused.
+            long bigln = 1000000;
+            long[] nextLink = new long[bigln + 1];
+
+            for (int i = 0; i + 1 < ln; i++)
+            {
+                long w = long.Parse(st.Substring(i, 1));
+                nextLink[w] = long.Parse(st.Substring(i + 1, 1));
+            }
+            nextLink[long.Parse(st.Substring(ln - 1))] = 10;
+            for (long i = 10; i < bigln; i++) nextLink[i] = i + 1;
+            nextLink[bigln] = long.Parse(st.Substring(0, 1));
+
+            long currCup = long.Parse(st.Substring(0, 1));
+
+            long tms = 10000000;
+            for (long i = 0; i < tms; i++)
+            {
+                long[] take3 = new long[3];
+                take3[0] = nextLink[currCup];
+                take3[1] = nextLink[take3[0]];
+                take3[2] = nextLink[take3[1]];
+
+                long dest = currCup - 1;
+                if (dest < 1) dest = bigln;
+
+                while (dest == take3[0] || dest == take3[1] || dest == take3[2])
+                {
+                    dest--;
+                    if (dest < 1) dest = bigln;
+                }
+
+                nextLink[currCup] = nextLink[take3[2]];
+                nextLink[take3[2]] = nextLink[dest];
+                nextLink[dest] = take3[0];
+                currCup = nextLink[currCup];
+            }
+
+            long ans = nextLink[1] * nextLink[nextLink[1]];
             return ans;
         }
     }
