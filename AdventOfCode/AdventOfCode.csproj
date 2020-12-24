@@ -87,6 +87,7 @@
     <Content Include="encoding.txt" />
     <Content Include="evade.txt" />
     <Content Include="ferry.txt" />
+    <Content Include="hextiles.txt" />
     <Content Include="ingredients.txt" />
     <Content Include="joltage.txt" />
     <Content Include="luggage.txt" />

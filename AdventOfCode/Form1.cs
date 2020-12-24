@@ -22,7 +22,7 @@ namespace AdventOfCode
             this.Show();
             Application.DoEvents();
 
-            this.textBox1.Text = Cups2().ToString();
+            this.textBox1.Text = HexTiles().ToString();
         }
 
         string[] GetInput(int dy)
@@ -1584,6 +1584,118 @@ namespace AdventOfCode
 
             long ans = nextLink[1] * nextLink[nextLink[1]];
             return ans;
+        }
+
+        // Day 24
+        int HexTiles()
+        {
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\hextiles.txt");
+            //string[] lines = HexTilesTestData();
+            Dictionary<string, int> finals = new Dictionary<string, int>();
+            foreach (string s in lines)
+            {
+                string wk = s;
+                int p = 0;
+                decimal endX = 0;
+                decimal endY = 0;
+                while (true)
+                {
+                    int ln = wk.Length;
+                    if (wk.Substring(0, 1) == "e")
+                    {
+                        endX++;
+                        if (ln == 1) break;
+                        wk = wk.Substring(1);
+                    }
+                    else if (wk.Substring(0, 1) == "w")
+                    {
+                        endX--;
+                        if (ln == 1) break;
+                        wk = wk.Substring(1);
+                    }
+                    else if (wk.Substring(0, 2) == "ne")
+                    {
+                        endX += 0.5m;
+                        endY += 0.5m;
+                        if (ln == 2) break;
+                        wk = wk.Substring(2);
+                    }
+                    else if (wk.Substring(0, 2) == "nw")
+                    {
+                        endX -= 0.5m;
+                        endY += 0.5m;
+                        if (ln == 2) break;
+                        wk = wk.Substring(2);
+                    }
+                    else if (wk.Substring(0, 2) == "se")
+                    {
+                        endX += 0.5m;
+                        endY -= 0.5m;
+                        if (ln == 2) break;
+                        wk = wk.Substring(2);
+                    }
+                    else if (wk.Substring(0, 2) == "sw")
+                    {
+                        endX -= 0.5m;
+                        endY -= 0.5m;
+                        if (ln == 2) break;
+                        wk = wk.Substring(2);
+                    }
+                }
+
+                string f = endX.ToString() + "," + endY.ToString();
+                if (finals.ContainsKey(f)) finals[f]++;
+                else finals.Add(f, 1);
+            }
+            Dictionary<string, int> black = new Dictionary<string, int>();
+            foreach (string k in finals.Keys)
+            {
+                if (finals[k] % 2 == 1) black.Add(k, 1);
+            }
+
+            for (int round = 1; round <= 100; round++)
+            {
+                Dictionary<string, int> newBlack = new Dictionary<string, int>();
+                Dictionary<string, int> white = new Dictionary<string, int>();
+
+                foreach (string k in black.Keys)
+                {
+                    string[] kc = k.Split(',');
+                    decimal x = decimal.Parse(kc[0]);
+                    decimal y = decimal.Parse(kc[1]);
+                    string[] neighbors = new string[6];
+                    neighbors[0] = (x + 1).ToString() + "," + (y).ToString();
+                    neighbors[1] = (x - 1).ToString() + "," + (y).ToString();
+                    neighbors[2] = (x + .5m).ToString() + "," + (y + .5m).ToString();
+                    neighbors[3] = (x + .5m).ToString() + "," + (y - .5m).ToString();
+                    neighbors[4] = (x - .5m).ToString() + "," + (y + .5m).ToString();
+                    neighbors[5] = (x - .5m).ToString() + "," + (y - .5m).ToString();
+
+                    int bc = 0;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if (black.ContainsKey(neighbors[i])) bc++;
+                        else if (white.ContainsKey(neighbors[i])) white[neighbors[i]]++;
+                        else white.Add(neighbors[i], 1);
+                    }
+                    if (bc == 1 || bc == 2) newBlack.Add(k, 1);
+                }
+                foreach (string k in white.Keys)
+                {
+                    if (white[k] == 2) newBlack.Add(k, 1);
+                }
+                //MessageBox.Show(newBlack.Count.ToString());
+                black = newBlack;
+            }
+            return black.Count;
+        }
+        string[] HexTilesTestData()
+        {
+            return new string[] { "sesenwnenenewseeswwswswwnenewsewsw", "neeenesenwnwwswnenewnwwsewnenwseswesw", "seswneswswsenwwnwse", "nwnwneseeswswnenewneswwnewseswneseene",
+                "swweswneswnenwsewnwneneseenw", "eesenwseswswnenwswnwnwsewwnwsene", "sewnenenenesenwsewnenwwwse", "wenwwweseeeweswwwnwwe", "wsweesenenewnwwnwsenewsenwwsesesenwne",
+                "neeswseenwwswnwswswnw", "nenwswwsewswnenenewsenwsenwnesesenew", "enewnwewneswsewnwswenweswnenwsenwsw", "sweneswneswneneenwnewenewwneswswnese",
+                "swwesenesewenwneswnwwneseswwne", "enesenwswwswneneswsenwnewswseenwsese", "wnwnesenesenenwwnenwsewesewsesesew", "nenewswnwewswnenesenwnesewesw",
+                "eneswnwswnwsenenwnwnwwseeswneewsenese", "neswnwewnwnwseenwseesewsenwsweewe", "wseweeenwnesenwwwswnew"};
         }
     }
 }
