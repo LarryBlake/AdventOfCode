@@ -97,6 +97,7 @@
     <Content Include="seats.txt" />
     <Content Include="tickets.txt" />
     <Content Include="tiles.txt" />
+    <Content Include="tilesTest.txt" />
     <Content Include="toboggan.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

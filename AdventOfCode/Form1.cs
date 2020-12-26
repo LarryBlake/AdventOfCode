@@ -22,7 +22,7 @@ namespace AdventOfCode
             this.Show();
             Application.DoEvents();
 
-            this.textBox1.Text = HexTiles().ToString();
+            this.textBox1.Text = Jurassic().ToString();
         }
 
         string[] GetInput(int dy)
@@ -1267,28 +1267,461 @@ namespace AdventOfCode
             long ans = 0;
             foreach (string c in cands)
             {
-                string soFar = "";
-                if (TryCand(c, rules, soFar, "0") == 2) ans++;
+                List<string> poss = CrawlCand(c, rules, "", "0");
+                if (poss.Contains(c)) ans++;
             }
             return ans;
         }
-        int TryCand(string tgt, Dictionary<string, List<string[]>> rules, string soFar, string rKey)
+        List<String> CrawlCand(string tgt, Dictionary<string, List<string[]>> rules, string soFar, string rKey)
         {
             int sfl = soFar.Length;
+            int tgl = tgt.Length;
+            int nsl = soFar.Length;
+            List<String> poss = new List<string>();
             foreach (string[] path in rules[rKey])
             {
-                string newSF = soFar;
+                List<String> pathposs = new List<string>();
+                pathposs.Add(soFar);
+
                 int pl = path.Length;
-                foreach (string p in path)
+                for (int i = 0; i < pl; i++)
                 {
-                    if (p.Substring(1, 1) == "a" || p.Substring(1, 1) == "b") newSF += p.Substring(1, 1);
+                    List<string> newPoss = new List<string>();
+                    if (path[i].Substring(0, 1) == "\"")
+                    {
+                        foreach (string w in pathposs)
+                        {
+                            string w2 = w + path[i].Substring(1, 1);
+                            nsl = w2.Length;
+                            if (nsl <= tgl && tgt.Substring(0, nsl) == w2.Substring(0, nsl))
+                            {
+                                if (!newPoss.Contains(w2)) newPoss.Add(w2);
+                            }
+                        }
+                    }
                     else
                     {
-                        //newSF
+                        foreach (string w in pathposs)
+                        {
+                            List<String> pwk = CrawlCand(tgt, rules, w, path[i]);
+                            foreach (string w2 in pwk)
+                            {
+                                if (!newPoss.Contains(w2)) newPoss.Add(w2);
+                            }
+                        }
+                    }
+                    pathposs = newPoss;
+                }
+                foreach (string w in pathposs)
+                {
+                    if (!poss.Contains(w)) poss.Add(w);
+                }
+            }
+            return poss;
+        }
+
+        // Day 20
+        long Jurassic()
+        {
+            string[] lines = System.IO.File.ReadAllLines(@"..\..\..\tiles.txt");
+            int ln = lines.Length;
+            Dictionary<string, string[]> tile = new Dictionary<string, string[]>();
+            string t0 = "";
+            int i = 0;
+            while (i < ln)
+            {
+                string t = lines[i].Substring(5).Replace(":", "");   // "Tile XXXX:"
+                string[] tw = new string[10];
+                for (int j = 0; j < 10; j++) tw[j] = lines[i + j + 1];
+                tile.Add(t, tw);
+                if (i == 0) t0 = t;
+
+                i += 12;
+            }
+
+            Dictionary<string, SubGrid> placed = new Dictionary<string, SubGrid>();
+            
+            SubGrid sg = new SubGrid(tile[t0], 0, "none");
+            sg.X = 0;
+            sg.Y = 0;
+            placed.Add(t0, sg);
+            tile.Remove(t0);
+
+            while (tile.Count > 0)
+            {
+                //MessageBox.Show(tile.Count.ToString() + ", " + placed.Count.ToString());
+
+                Dictionary<string, string> placedXY = new Dictionary<string, string>();
+                foreach (string k in placed.Keys) placedXY.Add(placed[k].Coords(), k);
+
+                string wtk = "";
+                SubGrid wsg = sg;
+                bool found = false;
+                foreach (string k in placedXY.Keys)
+                {
+                    SubGrid p = placed[placedXY[k]];
+                    string[] dirs = new string[4];
+                    dirs[0] = p.CoordsN();  // north of this cell
+                    dirs[1] = p.CoordsE();  // east of this cell
+                    dirs[2] = p.CoordsS();  // south of this cell
+                    dirs[3] = p.CoordsW();  // west of this cell
+
+                    for (int d = 0; d < 4; d++)
+                    {
+                        if (!placedXY.ContainsKey(dirs[d]))
+                        {
+                            foreach (string tk in tile.Keys)
+                            {
+                                for (int r = 0; r < 4; r++)
+                                {
+                                    foreach (string flp in new string[] { "none", "hor", "vert" })
+                                    {
+                                        SubGrid tsg = new SubGrid(tile[tk], r, flp);
+
+                                        if (d == 0 && tsg.South() == p.North())
+                                        {
+                                            wtk = tk;
+                                            wsg = tsg;
+                                            wsg.X = p.X;
+                                            wsg.Y = p.Y + 1;
+                                            found = true;
+                                            break;
+                                        }
+                                        else if (d == 1 && tsg.West() == p.East())
+                                        {
+                                            wtk = tk;
+                                            wsg = tsg;
+                                            wsg.X = p.X + 1;
+                                            wsg.Y = p.Y;
+                                            found = true;
+                                            break;
+                                        }
+                                        else if (d == 2 && tsg.North() == p.South())
+                                        {
+                                            wtk = tk;
+                                            wsg = tsg;
+                                            wsg.X = p.X;
+                                            wsg.Y = p.Y - 1;
+                                            found = true;
+                                            break;
+                                        }
+                                        else if (d == 3 && tsg.East() == p.West())
+                                        {
+                                            wtk = tk;
+                                            wsg = tsg;
+                                            wsg.X = p.X - 1;
+                                            wsg.Y = p.Y;
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (found) break;
+                                }
+                            }
+                            if (found) break;
+                        }
+                        if (found) break;
+                    }
+                }
+                if (found)
+                {
+                    placed.Add(wtk, wsg);
+                    tile.Remove(wtk);
+                }
+            }
+
+            // answer to "part 1" problem
+            //long ans = 1;
+            //foreach (string k in placed.Keys)
+            //{
+            //    int c = 0;
+            //    foreach (string k2 in placed.Keys)
+            //    {
+            //        if (placed[k2].Coords() == placed[k].CoordsN() || placed[k2].Coords() == placed[k].CoordsE() ||
+            //            placed[k2].Coords() == placed[k].CoordsS() || placed[k2].Coords() == placed[k].CoordsW()) c++;
+            //    }
+            //    if (c == 2) ans *= long.Parse(k);
+            //}
+            //return ans;
+
+            int mnx = 99;
+            int mny = 99;
+            int mxx = -99;
+            int mxy = -99;
+            foreach (string k in placed.Keys)
+            {
+                if (placed[k].X > mxx) mxx = placed[k].X;
+                if (placed[k].Y > mxy) mxy = placed[k].Y;
+                if (placed[k].X < mnx) mnx = placed[k].X;
+                if (placed[k].Y < mny) mny = placed[k].Y;
+            }
+
+            // X is in range -10 to 1
+            // Y is in range -6 to 5
+            //MessageBox.Show("X = " + mnx.ToString() + " to " + mxx.ToString() + Environment.NewLine + "Y = " + mny.ToString() + " to " + mxy.ToString());
+
+
+            // DEBUGGING STUFF
+            
+            //string[,] layout = new string[12, 12];
+            //foreach (string k in placed.Keys)
+            //{
+            //    layout[placed[k].X + 10, placed[k].Y + 6] = k;
+            //}
+
+            //for (int y = 0; y < 11; y++)
+            //{
+            //    for (int x = 0; x < 12; x++)
+            //    {
+            //        if (placed[layout[x, y]].North() != placed[layout[x, y + 1]].South())
+            //        {
+            //            MessageBox.Show(layout[x, y] + " NS" + Environment.NewLine + (placed[layout[x, y]].North() + Environment.NewLine + placed[layout[x, y + 1]].South()));
+            //        }
+            //    }
+            //}
+            //for (int y = 0; y < 12; y++)
+            //{
+            //    for (int x = 0; x < 11; x++)
+            //    {
+            //        if (placed[layout[x, y]].East() != placed[layout[x + 1, y]].West())
+            //        {
+            //            MessageBox.Show(layout[x, y] + " EW" + Environment.NewLine + (placed[layout[x, y]].East() + Environment.NewLine + placed[layout[x + 1, y]].West()));
+            //        }
+            //    }
+            //}
+
+
+            // remove borders and stitch
+            string[,] bigGrid = new string[96, 96];
+            foreach (string k in placed.Keys)
+            {
+                int xlo = 8 * (placed[k].X - mnx);
+                int ylo = 8 * (placed[k].Y - mny);
+                for (int y = 1; y < 9; y++) 
+                {
+                    for (int x = 1; x < 9; x++)
+                    {
+                        bigGrid[xlo + x - 1, ylo + y - 1] = placed[k].Cells[x, y];
                     }
                 }
             }
-            return 0;
+            string[] bigSg = new string[96];
+            int b = 0;
+            for (int y = 0; y < 96; y++)
+            {
+                string bGrid = "";
+                for (int x = 0; x < 96; x++)
+                {
+                    bGrid += bigGrid[x, y];
+                }
+                bigSg[b] = bGrid;
+                b++;
+            }
+
+            bool aligned = false;
+            for (int r = 0; r < 4; r++)
+            {
+                foreach (string flp in new string[] { "none", "hor", "vert" })
+                {
+                    SubGrid m = new SubGrid(bigSg, r, flp);
+                    if (HasMonster(m.Cells))
+                    {
+                        bigGrid = m.Cells;
+                        aligned = true;
+                        break;
+                    }
+                }
+                if (aligned) break;
+            }
+            if (!aligned) MessageBox.Show("crooked");
+
+            string[,] bigGrid2 = ReplaceMonsters(bigGrid);
+            long ans = 0;
+            string cb = "";
+            for (int y = 0; y < 96; y++)
+            {
+                for (int x = 0; x < 96; x++)
+                {
+                    cb += bigGrid2[x, y];
+                    if (bigGrid2[x, y] == "#") ans++;
+                }
+                cb += Environment.NewLine;
+            }
+            Clipboard.SetText(cb);
+            return ans;
+        }
+        class SubGrid
+        {
+            public int X;
+            public int Y;
+            int sz;
+            public string[,] Cells;
+
+            public SubGrid(string[] init, int rotation, string flip)
+            {
+                sz = init.Length;
+                Cells = new string[sz, sz];
+                for (int y = 0; y < sz; y++)
+                {
+                    for (int x = 0; x < sz; x++)
+                    {
+                        Cells[x, y] = init[y].Substring(x, 1);
+                    }
+                }
+
+                for (int r = 0; r < rotation; r++) Rotate();
+
+                if (flip == "vert") FlipVert();
+                else if (flip == "hor") FlipHor();
+            }
+            void Rotate()
+            {
+                string[,] nwCells = new string[sz, sz];
+                for (int y = 0; y < sz; y++)
+                {
+                    for (int x = 0; x < sz; x++)
+                    {
+                        nwCells[sz - y - 1, x] = Cells[x, y];
+                    }
+                }
+                Cells = nwCells;
+            }
+            void FlipVert()
+            {
+                string[,] nwCells = new string[sz, sz];
+                for (int y = 0; y < sz; y++)
+                {
+                    for (int x = 0; x < sz; x++)
+                    {
+                        nwCells[x, y] = Cells[x, sz - y - 1];
+                    }
+                }
+                Cells = nwCells;
+            }
+            void FlipHor()
+            {
+                string[,] nwCells = new string[sz, sz];
+                for (int y = 0; y < sz; y++)
+                {
+                    for (int x = 0; x < sz; x++)
+                    {
+                        nwCells[x, y] = Cells[sz - x - 1, y];
+                    }
+                }
+                Cells = nwCells;
+            }
+            public string North()
+            {
+                string n = "";
+                for (int x = 0; x < sz; x++) n += Cells[x, 0];
+                return n;
+            }
+            public string South()
+            {
+                string s = "";
+                for (int x = 0; x < sz; x++) s += Cells[x, sz - 1];
+                return s;
+            }
+            public string East()
+            {
+                string e = "";
+                for (int y = 0; y < sz; y++) e += Cells[sz - 1, y];
+                return e;
+            }
+            public string West()
+            {
+                string w = "";
+                for (int y = 0; y < sz; y++) w += Cells[0, y];
+                return w;
+            }
+            public string Coords()
+            {
+                return X.ToString() + "," + Y.ToString();
+            }
+            public string CoordsE()
+            {
+                return (X + 1).ToString() + "," + Y.ToString();
+            }
+            public string CoordsW()
+            {
+                return (X - 1).ToString() + "," + Y.ToString();
+            }
+            public string CoordsN()
+            {
+                return X.ToString() + "," + (Y + 1).ToString();
+            }
+            public string CoordsS()
+            {
+                return X.ToString() + "," + (Y - 1).ToString();
+            }
+        }
+        bool HasMonster(string[,] cells)
+        {
+            for (int y = 0; y < 94; y++)
+            {
+                for (int x = 0; x < 77; x++)
+                {
+                    if (cells[x + 18, y] +
+                        cells[x, y + 1] +
+                        cells[x + 5, y + 1] + cells[x + 6, y + 1] +
+                        cells[x + 11, y + 1] + cells[x + 12,y + 1] +
+                        cells[x + 17, y + 1] + cells[x + 18, y + 1] + cells[x + 19, y + 1] +
+                        cells[x + 1, y + 2] +
+                        cells[x + 4, y + 2] +
+                        cells[x + 7, y + 2] +
+                        cells[x + 10, y + 2] +
+                        cells[x + 13, y + 2] +
+                        cells[x + 16, y + 2]
+                        == "###############") return true;
+                }
+            }
+            return false;
+        }
+        string[,] ReplaceMonsters(string[,] cells)
+        {
+            string[,] nw = new string[96, 96];
+            for (int y = 0; y < 96; y++)
+            {
+                for (int x = 0; x < 96; x++) nw[x, y] = cells[x, y];
+            }
+
+            for (int y = 0; y < 94; y++)
+            {
+                for (int x = 0; x < 77; x++)
+                {
+                    if (cells[x + 18, y] +
+                        cells[x, y + 1] +
+                        cells[x + 5, y + 1] + cells[x + 6, y + 1] +
+                        cells[x + 11, y + 1] + cells[x + 12, y + 1] +
+                        cells[x + 17, y + 1] + cells[x + 18, y + 1] + cells[x + 19, y + 1] +
+                        cells[x + 1, y + 2] +
+                        cells[x + 4, y + 2] +
+                        cells[x + 7, y + 2] +
+                        cells[x + 10, y + 2] +
+                        cells[x + 13, y + 2] +
+                        cells[x + 16, y + 2]
+                        == "###############")
+                    {
+                        nw[x + 18, y] = "O";
+                        nw[x, y + 1] = "O";
+                        nw[x + 5, y + 1] = "O";
+                        nw[x + 6, y + 1] = "O";
+                        nw[x + 11, y + 1] = "O";
+                        nw[x + 12, y + 1] = "O";
+                        nw[x + 17, y + 1] = "O";
+                        nw[x + 18, y + 1] = "O";
+                        nw[x + 19, y + 1] = "O";
+                        nw[x + 1, y + 2] = "O";
+                        nw[x + 4, y + 2] = "O";
+                        nw[x + 7, y + 2] = "O";
+                        nw[x + 10, y + 2] = "O";
+                        nw[x + 13, y + 2] = "O";
+                        nw[x + 16, y + 2] = "O";
+                    }
+                }
+            }
+
+            return nw;
         }
 
         // Day 21
@@ -1591,7 +2024,7 @@ namespace AdventOfCode
         {
             string[] lines = System.IO.File.ReadAllLines(@"..\..\..\hextiles.txt");
             //string[] lines = HexTilesTestData();
-            Dictionary<string, int> finals = new Dictionary<string, int>();
+            Dictionary<string, int> black = new Dictionary<string, int>();
             foreach (string s in lines)
             {
                 string wk = s;
@@ -1643,17 +2076,12 @@ namespace AdventOfCode
                     }
                 }
 
-                string f = endX.ToString() + "," + endY.ToString();
-                if (finals.ContainsKey(f)) finals[f]++;
-                else finals.Add(f, 1);
-            }
-            Dictionary<string, int> black = new Dictionary<string, int>();
-            foreach (string k in finals.Keys)
-            {
-                if (finals[k] % 2 == 1) black.Add(k, 1);
+                string b = endX.ToString() + "," + endY.ToString();
+                if (black.ContainsKey(b)) black.Remove(b); // visited even number of times?  don't want it.
+                else black.Add(b, 1);
             }
 
-            for (int round = 1; round <= 100; round++)
+            for (int round = 0; round < 100; round++)
             {
                 Dictionary<string, int> newBlack = new Dictionary<string, int>();
                 Dictionary<string, int> white = new Dictionary<string, int>();
@@ -1684,7 +2112,6 @@ namespace AdventOfCode
                 {
                     if (white[k] == 2) newBlack.Add(k, 1);
                 }
-                //MessageBox.Show(newBlack.Count.ToString());
                 black = newBlack;
             }
             return black.Count;
@@ -1696,6 +2123,37 @@ namespace AdventOfCode
                 "neeswseenwwswnwswswnw", "nenwswwsewswnenenewsenwsenwnesesenew", "enewnwewneswsewnwswenweswnenwsenwsw", "sweneswneswneneenwnewenewwneswswnese",
                 "swwesenesewenwneswnwwneseswwne", "enesenwswwswneneswsenwnewswseenwsese", "wnwnesenesenenwwnenwsewesewsesesew", "nenewswnwewswnenesenwnesewesw",
                 "eneswnwswnwsenenwnwnwwseeswneewsenese", "neswnwewnwnwseenwseesewsenwsweewe", "wseweeenwnesenwwwswnew"};
+        }
+
+        // Day 25
+        long RoomKey()
+        {
+            long ans = 0;
+            long cpublic = 1717001;
+            long dpublic = 523731;
+            //long cpublic = 5764801;
+            //long dpublic = 17807724;
+            long modder = 20201227;
+
+            long cloop = 0;
+            long csubj = 7;
+            long cwk = 1;
+            while (true)
+            {
+                cloop++;
+                cwk = (cwk * csubj) % modder;
+                if (cwk == cpublic) break;
+            }
+
+            long encKey = 1;
+            for (long i = 0; i < cloop; i++)
+            {
+                encKey = (encKey * dpublic) % modder;
+            }
+
+            ans = encKey;
+
+            return ans;
         }
     }
 }
