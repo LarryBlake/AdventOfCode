@@ -1383,7 +1383,7 @@ namespace AdventOfCode
                                             wtk = tk;
                                             wsg = tsg;
                                             wsg.X = p.X;
-                                            wsg.Y = p.Y + 1;
+                                            wsg.Y = p.Y - 1;
                                             found = true;
                                             break;
                                         }
@@ -1401,7 +1401,7 @@ namespace AdventOfCode
                                             wtk = tk;
                                             wsg = tsg;
                                             wsg.X = p.X;
-                                            wsg.Y = p.Y - 1;
+                                            wsg.Y = p.Y + 1;
                                             found = true;
                                             break;
                                         }
@@ -1533,7 +1533,6 @@ namespace AdventOfCode
                 }
                 if (aligned) break;
             }
-            if (!aligned) MessageBox.Show("crooked");
 
             string[,] bigGrid2 = ReplaceMonsters(bigGrid);
             long ans = 0;
@@ -1648,11 +1647,11 @@ namespace AdventOfCode
             }
             public string CoordsN()
             {
-                return X.ToString() + "," + (Y + 1).ToString();
+                return X.ToString() + "," + (Y - 1).ToString();
             }
             public string CoordsS()
             {
-                return X.ToString() + "," + (Y - 1).ToString();
+                return X.ToString() + "," + (Y + 1).ToString();
             }
         }
         bool HasMonster(string[,] cells)
